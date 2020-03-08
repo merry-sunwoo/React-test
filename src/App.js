@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import './App.css';
 import TOC from "./components/TOC";
-import Content from "./components/Content";
+import ReadContent from "./components/ReadContent";
 import Subject from "./components/Subject";
+import Control from "./components/Control";
+import CreateContent from "./components/CreateContent";
+import UpdateContent from "./components/UpdateContent";
 
 class App extends Component {
   constructor(props) {
@@ -21,25 +24,75 @@ class App extends Component {
     }
   }
 
-  render() {
-    console.log("App rendered");
-    var _title, _desc = null;
+  getReadContent() {
+    var i = 0;
+    while (i < this.state.contents.length) {
+      var content = this.state.contents[i];
+      if (content.id === this.state.selected_content_id) {
+        return content;
+      }
+      i++;
+    }
+  }
+  
+  getContent() {
+    var data, _article = null;
 
     if (this.state.mode === 'welcome') {
-      _title = this.state.welcome.title;
-      _desc = this.state.welcome.desc;
+      data = this.state.welcome;
+      _article = <ReadContent title={data.title} desc={data.desc}></ReadContent>
     } 
     else if (this.state.mode === 'read') {
-      var i = 0;
-      while (i < this.state.contents.length) {
-        var data = this.state.contents[i];
-        if (data.id === this.state.selected_content_id) {
-          _title = data.title;
-          _desc = data.desc;
-        }
-        i++;
+      data = this.getReadContent();
+      _article = <ReadContent title={data.title} desc={data.desc}></ReadContent>
+    }
+    else if (this.state.mode === 'create') {
+      _article = 
+        <CreateContent 
+          onSubmit={function(_title, _desc){
+            console.log(_title,_desc);
+            var new_idx = this.state.contents.length + 1;
+            var _contents = this.state.contents.concat(
+              {id: new_idx, title: _title, desc: _desc}
+            );
+            this.setState({
+              contents: _contents          
+            });
+            }.bind(this)}></CreateContent>
+    }
+    else if (this.state.mode === 'update') {
+      var _contents = Array.from(this.state.contents);
+      var _content = this.getReadContent();
+      if (_content != null) {
+        _article = 
+          <UpdateContent 
+            data={_content} 
+            onSubmit={function(updated_data){
+              var i = 0;
+              while (i < this.state.contents.length) {
+                if (this.state.contents[i].id === updated_data.id) {
+                  _contents[i] = {id: updated_data.id, title: updated_data.title, desc: updated_data.desc};
+                  break;
+                }
+                i++;
+              }
+              this.setState({
+                contents: _contents,
+                mode: 'read'
+              });
+            }.bind(this)}>
+          </UpdateContent> 
+      } 
+      else {
+        return 'Nothing to update';
       }
     }
+    
+    return _article;
+  }
+
+  render() {
+    console.log("App rendered");
 
     return (
       <div className="App">
@@ -76,9 +129,37 @@ class App extends Component {
             })
           }.bind(this)}
           data={this.state.contents}></TOC>
-        <Content 
-          title={_title} 
-          desc={_desc}></Content>
+        <Control onChangeMode={function(_mode){
+          if (_mode === 'delete') {
+            if (this.state.selected_content_id != null) {
+              if (window.confirm("Are you sure you want to delete this one?")) {
+                var _contents = Array.from(this.state.contents);
+                var i =0;
+                while (i < _contents.length) {
+                  if (_contents[i].id === this.state.selected_content_id) {
+                    _contents.splice(i,1);
+                    break;
+                  }
+                  i++;
+                }
+                alert("Successfully deleted");
+             
+                this.setState({
+                  mode: 'welcome',
+                  contents: _contents
+                });
+              }
+            }
+          }
+          else {
+            this.setState({
+              mode: _mode
+            });
+          }
+        }.bind(this)}></Control>
+      
+        {this.getContent()}
+
       </div>
     );
   }
