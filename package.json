@@ -2,6 +2,7 @@
   "name": "react-test",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://github.com/merry-swjung/React-test",
   "dependencies": {
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
